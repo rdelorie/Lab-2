@@ -230,3 +230,37 @@ tree_dat %>%
   
 ```
 
+```{r}
+# final question
+growth_rates <- tree_dat %>%
+  arrange(species, treeID, year) %>% # will ensure correct order
+  group_by(treeID, species) %>% 
+   mutate(rad_ib_cm = rad_ib_mm * 0.1) %>% # mm to cm
+mutate(dbh_ib_cm = rad_ib_cm * 2) %>%  #radius to diameter at bh
+  mutate(annual_growth = dbh_ib_cm - lag(dbh_ib_cm)) %>% # Compute per-year growth
+  filter(!is.na(annual_growth)) %>% # Remove first year (NA values)
+  summarise(
+    total_years = n(),  # Count years of recorded growth
+    mean_growth = mean(annual_growth, na.rm = TRUE),  # Average per-year growth
+    sd_growth = sd(annual_growth, na.rm = TRUE)
+  ) %>%
+  filter(total_years >= 10) %>% # Only include trees with at least 10 years of growth
+  group_by(species) %>%
+  summarise(
+    species_mean_growth = mean(mean_growth, na.rm = TRUE),
+    species_sd_growth = sd(mean_growth, na.rm = TRUE)
+  ) %>%
+  arrange(desc(species_mean_growth)) # Rank by fastest growth
+
+# Top 3 fastest-growing species
+top_3_fastest <- growth_rates %>% slice_head(n = 3)
+
+# Bottom 3 slowest-growing species
+top_3_slowest <- growth_rates %>% slice_tail(n = 3)
+
+# see results
+print(top_3_fastest)
+print(top_3_slowest)
+
+# answer: 3 fastest are PIRE, PIBA, and POTR. 3 slowest are QURU, LALA, THOC
+```
